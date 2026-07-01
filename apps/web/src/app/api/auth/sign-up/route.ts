@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -44,9 +52,39 @@ export async function POST(request: Request) {
       );
     }
 
-    await prisma.user.create({
-      data: { id: userId, email, name },
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
     });
+
+    if (!existingUser) {
+      await prisma.user.create({
+        data: { id: userId, email, name },
+      });
+    }
+
+    const existingMembership = await prisma.membership.findFirst({
+      where: { userId },
+    });
+
+    if (!existingMembership) {
+      const orgSlug = slugify(name) + "-" + userId.slice(0, 8);
+
+      const org = await prisma.organization.create({
+        data: {
+          name: `${name}'s Organization`,
+          slug: orgSlug,
+          plan: "free",
+        },
+      });
+
+      await prisma.membership.create({
+        data: {
+          userId,
+          orgId: org.id,
+          role: "owner",
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch {
