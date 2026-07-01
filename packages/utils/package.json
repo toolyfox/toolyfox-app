@@ -1,0 +1,15 @@
+{
+  "name": "@toolyfox/utils",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "@toolyfox/types": "*"
+  }
+}
